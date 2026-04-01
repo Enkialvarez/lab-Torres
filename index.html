@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab. Virtual Álvarez — SSDC 2024</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f6fa;
+    --sidebar: #0f172a;
+    --accent: #2563eb;
+    --accent2: #1d4ed8;
+    --white: #ffffff;
+    --slate100: #f1f5f9;
+    --slate200: #e2e8f0;
+    --slate400: #94a3b8;
+    --slate500: #64748b;
+    --slate600: #475569;
+    --slate700: #334155;
+    --slate900: #0f172a;
+    --blue50: #eff6ff;
+    --blue100: #dbeafe;
+    --blue300: #93c5fd;
+    --blue400: #60a5fa;
+    --blue800: #1e40af;
+    --blue900: #1e3a8a;
+    --emerald100: #d1fae5;
+    --emerald600: #059669;
+    --red100: #fee2e2;
+    --red600: #dc2626;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+    --radius-3xl: 2rem;
+    --radius-4xl: 2.5rem;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.1);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.15);
+    --shadow-xl: 0 16px 48px rgba(0,0,0,.18);
+  }
+  html, body { height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--slate900); }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  aside {
+    width: 260px; flex-shrink: 0;
+    background: var(--sidebar); color: #fff;
+    display: flex; flex-direction: column;
+    box-shadow: var(--shadow-xl); z-index: 30;
+  }
+  .sidebar-logo { padding: 1.75rem 1.5rem; border-bottom: 1px solid #1e293b; }
+  .sidebar-logo .label { font-size: .6rem; font-weight: 900; letter-spacing: .35em; color: var(--accent); text-transform: uppercase; }
+  .sidebar-logo .name { font-size: 1.35rem; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; margin-top: .15rem; }
+  nav { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: .35rem; overflow-y: auto; }
+  .nav-btn {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .75rem 1rem; border-radius: var(--radius-xl);
+    border: none; background: transparent; color: var(--slate400);
+    font-family: inherit; font-size: .8rem; font-weight: 700;
+    cursor: pointer; transition: all .2s; text-align: left; width: 100%;
+  }
+  .nav-btn:hover { background: #1e293b; color: #fff; }
+  .nav-btn.active { background: var(--accent); color: #fff; box-shadow: var(--shadow-md); }
+  .nav-btn svg { flex-shrink: 0; }
+  .sidebar-footer { padding: 1rem; border-top: 1px solid #1e293b; text-align: center; font-size: .6rem; font-weight: 700; letter-spacing: .2em; color: #334155; text-transform: uppercase; }
+
+  /* ── MAIN ── */
+  main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  header {
+    background: rgba(255,255,255,.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--slate200);
+    padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+    z-index: 20; flex-shrink: 0;
+  }
+  .header-title { font-size: .65rem; font-weight: 700; letter-spacing: .2em; color: var(--slate500); text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-badge { font-size: .6rem; font-weight: 700; color: var(--slate400); letter-spacing: .15em; font-style: italic; }
+  .avatar { width: 2rem; height: 2rem; border-radius: .5rem; background: var(--blue100); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: .75rem; box-shadow: var(--shadow-sm); }
+  .content { flex: 1; overflow-y: auto; padding: 2rem; }
+  footer { background: var(--white); border-top: 1px solid var(--slate200); padding: .85rem; text-align: center; font-size: .6rem; font-weight: 700; letter-spacing: .25em; color: var(--slate400); text-transform: uppercase; flex-shrink: 0; z-index: 20; }
+
+  /* ── TABS ── */
+  .tab { display: none; }
+  .tab.active { display: block; animation: fadeUp .4s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── DASHBOARD ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 1.75rem; }
+  .stat-card {
+    background: rgba(255,255,255,.85); backdrop-filter: blur(8px);
+    padding: 1.5rem; border-radius: var(--radius-3xl);
+    box-shadow: var(--shadow-sm); border: 1px solid var(--slate100);
+    display: flex; align-items: center; gap: 1rem;
+    transition: box-shadow .2s;
+  }
+  .stat-card:hover { box-shadow: var(--shadow-md); }
+  .stat-icon { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--blue50); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .stat-label { font-size: .6rem; font-weight: 700; letter-spacing: .15em; color: var(--slate400); text-transform: uppercase; }
+  .stat-val { font-weight: 700; font-size: .85rem; }
+  .hero {
+    background: var(--slate900); color: #fff;
+    border-radius: var(--radius-4xl); padding: 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: var(--shadow-xl); overflow: hidden; position: relative;
+  }
+  .hero-content { max-width: 32rem; z-index: 2; }
+  .hero h3 { font-size: 2rem; font-weight: 900; letter-spacing: -.04em; margin-bottom: 1rem; }
+  .hero p { color: var(--slate400); font-size: .85rem; line-height: 1.7; margin-bottom: 1.5rem; }
+  .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .8rem 1.5rem; border-radius: var(--radius-xl); font-family: inherit; font-size: .85rem; font-weight: 700; border: none; cursor: pointer; transition: all .2s; }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: var(--shadow-md); }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost { background: rgba(255,255,255,.1); color: #fff; }
+  .btn-ghost:hover { background: rgba(255,255,255,.2); }
+  .hero-deco { opacity: .04; position: absolute; right: 2.5rem; font-size: 16rem; font-weight: 900; font-family: 'DM Mono', monospace; line-height: 1; user-select: none; top: 50%; transform: translateY(-50%) rotate(10deg); }
+
+  /* ── GLOSARIO ── */
+  .glass-card { background: rgba(255,255,255,.92); backdrop-filter: blur(8px); padding: 2rem; border-radius: var(--radius-3xl); box-shadow: var(--shadow-sm); border: 1px solid var(--slate200); }
+  .section-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+  .section-icon { padding: .75rem; background: var(--blue100); color: var(--accent); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); }
+  .section-title { font-size: 1.5rem; font-weight: 900; letter-spacing: -.03em; }
+  .section-sub { font-size: .8rem; color: var(--slate400); margin-top: .15rem; }
+  .glosario-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .glosario-item {
+    padding: 1.5rem; background: rgba(248,250,252,.6); border-radius: var(--radius-2xl);
+    border: 1px solid transparent; transition: all .2s; cursor: default;
+  }
+  .glosario-item:hover { background: var(--blue50); border-color: var(--blue100); }
+  .glosario-term { font-weight: 900; color: var(--accent); margin-bottom: .4rem; font-size: .95rem; }
+  .glosario-def { font-size: .8rem; color: var(--slate600); line-height: 1.6; }
+
+  /* ── REPORTE ── */
+  .report-grid { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.75rem; }
+  .form-group { display: flex; flex-direction: column; gap: .4rem; }
+  .form-label { font-size: .6rem; font-weight: 700; letter-spacing: .15em; color: var(--slate400); text-transform: uppercase; }
+  .form-input, .form-select, .form-textarea {
+    padding: .75rem 1rem; background: var(--slate100); border-radius: var(--radius-xl);
+    border: 1.5px solid transparent; font-family: inherit; font-size: .85rem; color: var(--slate900);
+    transition: border-color .2s, box-shadow .2s; outline: none; width: 100%;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+  .form-textarea { resize: none; height: 160px; }
+  .macro-box { padding: 2rem; background: rgba(248,250,252,.85); border-radius: var(--radius-3xl); border: 1px solid var(--slate100); margin-bottom: 1.75rem; }
+  .macro-title { font-size: .65rem; font-weight: 900; color: var(--blue800); text-transform: uppercase; letter-spacing: .15em; display: flex; align-items: center; gap: .4rem; margin-bottom: 1.5rem; }
+  .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .sidebar-hints { background: var(--blue900); color: #fff; padding: 1.5rem; border-radius: var(--radius-3xl); box-shadow: var(--shadow-lg); margin-bottom: 1.25rem; }
+  .hints-title { font-size: .65rem; font-weight: 700; color: var(--blue300); text-transform: uppercase; letter-spacing: .15em; display: flex; align-items: center; gap: .4rem; margin-bottom: 1rem; }
+  .hints-list { list-style: none; display: flex; flex-direction: column; gap: .75rem; }
+  .hints-list li { display: flex; gap: .6rem; font-size: .72rem; opacity: .9; line-height: 1.5; }
+  .hints-list .dot { color: var(--blue400); font-weight: 900; flex-shrink: 0; }
+  .btn-download {
+    width: 100%; margin-top: 2rem; background: var(--slate900); color: #fff;
+    padding: 1.2rem; border-radius: var(--radius-2xl); font-family: inherit;
+    font-size: .95rem; font-weight: 700; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: .75rem;
+    box-shadow: var(--shadow-xl); transition: background .2s;
+  }
+  .btn-download:hover { background: var(--accent); }
+
+  /* ── EXAMEN ── */
+  .quiz-wrap { max-width: 640px; margin: 0 auto; }
+  .quiz-card {
+    background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+    padding: 3rem; border-radius: 3rem; box-shadow: var(--shadow-xl);
+    border: 1px solid var(--slate200); min-height: 480px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .quiz-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .quiz-cert { font-size: .6rem; font-weight: 900; color: var(--accent); letter-spacing: .2em; text-transform: uppercase; }
+  .quiz-count { font-size: .6rem; font-weight: 700; color: var(--slate400); }
+  .progress-bar { width: 100%; height: .45rem; background: var(--slate100); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .6s ease; }
+  .quiz-q { font-size: 1.4rem; font-weight: 900; letter-spacing: -.02em; line-height: 1.3; margin-bottom: 2rem; color: var(--slate900); }
+  .quiz-options { display: flex; flex-direction: column; gap: .75rem; }
+  .quiz-opt {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.1rem 1.25rem; border-radius: var(--radius-2xl);
+    border: 2px solid var(--slate100); background: transparent;
+    font-family: inherit; font-size: .85rem; font-weight: 700;
+    cursor: pointer; text-align: left; color: var(--slate900);
+    transition: all .18s;
+  }
+  .quiz-opt:hover { border-color: var(--accent); background: var(--blue50); }
+  .quiz-num {
+    width: 2rem; height: 2rem; border-radius: .5rem; background: var(--slate100);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .72rem; color: var(--slate400); flex-shrink: 0; transition: all .18s;
+  }
+  .quiz-opt:hover .quiz-num { background: var(--blue100); color: var(--accent); }
+  /* Results */
+  .result-wrap { text-align: center; animation: fadeUp .5s ease both; }
+  .result-icon { width: 7rem; height: 7rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; }
+  .result-icon.pass { background: var(--emerald100); color: var(--emerald600); }
+  .result-icon.fail { background: var(--red100); color: var(--red600); }
+  .result-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -.04em; text-transform: uppercase; margin-bottom: .4rem; }
+  .result-sub { font-size: .85rem; color: var(--slate400); margin-bottom: 2rem; }
+  .score-box {
+    background: var(--slate900); color: #fff;
+    padding: 2.5rem; border-radius: var(--radius-4xl);
+    display: inline-block; width: 100%; max-width: 280px;
+    box-shadow: var(--shadow-xl); margin-bottom: 2rem;
+  }
+  .score-label { font-size: .6rem; font-weight: 700; color: var(--blue400); letter-spacing: .2em; text-transform: uppercase; margin-bottom: .5rem; }
+  .score-num { font-size: 4.5rem; font-weight: 900; letter-spacing: -.04em; line-height: 1; }
+  .score-detail { margin-top: 1rem; font-size: .75rem; font-weight: 700; background: rgba(255,255,255,.1); padding: .5rem 1rem; border-radius: 99px; text-transform: uppercase; letter-spacing: .08em; }
+  .btn-retry { background: none; border: none; color: var(--accent); font-family: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; text-decoration: underline; }
+
+  /* ── BIBLIOGRAFÍA ── */
+  .bib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 900px; margin: 0 auto; }
+  .bib-card { background: rgba(255,255,255,.92); backdrop-filter: blur(8px); padding: 2.5rem; border-radius: var(--radius-4xl); box-shadow: var(--shadow-sm); border: 1px solid var(--slate200); }
+  .bib-head { font-size: .65rem; font-weight: 900; text-transform: uppercase; letter-spacing: .2em; display: flex; align-items: center; gap: .5rem; margin-bottom: 2rem; }
+  .bib-head.blue { color: var(--accent); }
+  .bib-head.gray { color: var(--slate400); }
+  .bib-item { padding: 1.25rem 1.25rem 1.25rem 1.5rem; background: var(--slate100); border-radius: var(--radius-xl); margin-bottom: 1.25rem; border-left: 4px solid; }
+  .bib-item.blue { border-left-color: var(--accent); }
+  .bib-item.gray { border-left-color: var(--slate300); }
+  .bib-title { font-size: .85rem; font-weight: 700; }
+  .bib-sub { font-size: .72rem; color: var(--slate500); font-style: italic; margin-top: .2rem; }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.6); display: flex; align-items: center; justify-content: center; z-index: 99; animation: fadeUp .3s ease; }
+  .modal-box { background: #fff; border-radius: var(--radius-3xl); padding: 2.5rem; max-width: 500px; width: 90%; box-shadow: var(--shadow-xl); }
+  .modal-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 1.25rem; color: var(--slate900); }
+  .modal-pre { font-family: 'DM Mono', monospace; font-size: .75rem; background: var(--slate100); padding: 1.25rem; border-radius: var(--radius-xl); white-space: pre-wrap; line-height: 1.7; color: var(--slate700); max-height: 340px; overflow-y: auto; margin-bottom: 1.5rem; }
+  .modal-close { width: 100%; padding: .85rem; border-radius: var(--radius-xl); background: var(--slate900); color: #fff; border: none; font-family: inherit; font-weight: 700; cursor: pointer; font-size: .9rem; transition: background .2s; }
+  .modal-close:hover { background: var(--accent); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    aside { width: 220px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .glosario-grid, .report-grid, .bib-grid, .macro-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .hero { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-logo">
+      <div class="label">Lab. Virtual</div>
+      <div class="name">Álvarez 🔬</div>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="showTab('dashboard', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" onclick="showTab('glosario', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Glosario LVA
+      </button>
+      <button class="nav-btn" onclick="showTab('reporte', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+        Generar Reporte
+      </button>
+      <button class="nav-btn" onclick="showTab('examen', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Examen Evaluativo
+      </button>
+      <button class="nav-btn" onclick="showTab('bibliografia', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Acervo Técnico
+      </button>
+    </nav>
+    <div class="sidebar-footer">V-7.2 | SGC-LVA-2024</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <header>
+      <div class="header-title" id="headerTitle">Dashboard</div>
+      <div class="header-right">
+        <span class="header-badge">Estándar Operativo 2024</span>
+        <div class="avatar">Á</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="tab active" id="tab-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="stat-label">Color</div>
+              <div class="stat-val">Validación Álvarez</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="stat-label">Aspecto</div>
+              <div class="stat-val">Validación Álvarez</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="stat-label">Olor</div>
+              <div class="stat-val">Validación Álvarez</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="stat-label">Espuma</div>
+              <div class="stat-val">Validación Álvarez</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="hero-content">
+            <h3>Entorno de Control SSDC</h3>
+            <p>Gestión académica consolidada. Plataforma optimizada para la captura integral de parámetros bajo la normativa vigente de 2024.</p>
+            <div class="hero-btns">
+              <button class="btn btn-primary" onclick="showTab('reporte', document.querySelectorAll('.nav-btn')[2])">
+                Generar Reporte
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button class="btn btn-ghost" onclick="showTab('examen', document.querySelectorAll('.nav-btn')[3])">Evaluar Conocimientos</button>
+            </div>
+          </div>
+          <div class="hero-deco">⚗</div>
+        </div>
+      </div>
+
+      <!-- GLOSARIO -->
+      <div class="tab" id="tab-glosario">
+        <div class="glass-card">
+          <div class="section-header">
+            <div class="section-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </div>
+            <div>
+              <div class="section-title">Glosario de Referencia LVA</div>
+              <div class="section-sub">Terminología clínica estandarizada para 2024.</div>
+            </div>
+          </div>
+          <div class="glosario-grid">
+            <div class="glosario-item"><div class="glosario-term">Coluria</div><div class="glosario-def">Coloración oscura de la orina (similar al té o refresco de cola) por presencia de bilirrubina conjugada.</div></div>
+            <div class="glosario-item"><div class="glosario-term">Hematuria</div><div class="glosario-def">Presencia de sangre (eritrocitos) en la orina. Puede ser macroscópica o microscópica.</div></div>
+            <div class="glosario-item"><div class="glosario-term">Piuria</div><div class="glosario-def">Presencia de pus o leucocitos abundantes en la orina, indicativo de infección o inflamación.</div></div>
+            <div class="glosario-item"><div class="glosario-term">Cetonuria</div><div class="glosario-def">Aparición de cuerpos cetónicos en la orina, común en diabetes descompensada o ayuno prolongado.</div></div>
+            <div class="glosario-item"><div class="glosario-term">Glucosuria</div><div class="glosario-def">Presencia de glucosa en la orina cuando se supera el umbral renal (aprox. 180 mg/dL).</div></div>
+            <div class="glosario-item"><div class="glosario-term">Densidad Urinaria</div><div class="glosario-def">Medida de la capacidad de concentración y dilución del riñón.</div></div>
+            <div class="glosario-item"><div class="glosario-term">Proteinuria</div><div class="glosario-def">Presencia de proteínas en orina; si es persistente, suele indicar daño glomerular.</div></div>
+            <div class="glosario-item"><div class="glosario-term">Efecto Puente</div><div class="glosario-def">Error técnico donde el exceso de orina mezcla los reactivos de almohadillas adyacentes en la tira.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTE -->
+      <div class="tab" id="tab-reporte">
+        <div class="glass-card" style="max-width:960px;margin:0 auto;">
+          <div class="section-header" style="border-bottom:1px solid var(--slate100);padding-bottom:1.25rem;margin-bottom:1.75rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+            <div class="section-title" style="font-size:1.1rem;">Captura Integral de Parámetros Urinarios</div>
+          </div>
+          <div class="report-grid">
+            <div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Identificación Paciente</label>
+                  <input class="form-input" id="rPaciente" type="text" placeholder="Nombre completo">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fecha Registro (2024)</label>
+                  <input class="form-input" id="rFecha" type="date">
+                </div>
+              </div>
+              <div class="macro-box">
+                <div class="macro-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  I. Evaluación Macroscópica
+                </div>
+                <div class="macro-grid">
+                  <div class="form-group">
+                    <label class="form-label">Color</label>
+                    <select class="form-select" id="rColor">
+                      <option>Incoloro</option>
+                      <option>Amarillo Pálido</option>
+                      <option selected>Amarillo</option>
+                      <option>Ámbar</option>
+                      <option>Rojo (Hematuria)</option>
+                      <option>Marrón (Coluria)</option>
+                      <option>Verde / Azul</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Aspecto</label>
+                    <select class="form-select" id="rAspecto">
+                      <option selected>Límpido</option>
+                      <option>Opalescente</option>
+                      <option>Ligeramente Turbio</option>
+                      <option>Turbio</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Olor (Aroma)</label>
+                    <select class="form-select" id="rOlor">
+                      <option selected>Sui Generis</option>
+                      <option>Fétido</option>
+                      <option>Amoniacal</option>
+                      <option>Frutal (Cetosis)</option>
+                      <option>Inodoro</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Espuma</label>
+                    <select class="form-select" id="rEspuma">
+                      <option selected>Blanca Fugaz</option>
+                      <option>Blanca Persistente</option>
+                      <option>Amarilla</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="sidebar-hints">
+                <div class="hints-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
+                  Sugerencias Spinreact
+                </div>
+                <ul class="hints-list">
+                  <li><span class="dot">•</span><span>Infección: "Nitritos (+), Leucocitos (+++)"</span></li>
+                  <li><span class="dot">•</span><span>Metabólico: "Glucosa (+++), Cetonas (++)"</span></li>
+                  <li><span class="dot">•</span><span>Daño Renal: "Proteína (+++), Sangre (+)"</span></li>
+                  <li><span class="dot">•</span><span>Hepatopatía: "Bilirrubina (++), Urobilinógeno (+)"</span></li>
+                </ul>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hallazgos Químicos LVA</label>
+                <textarea class="form-textarea" id="rQuimico" placeholder="Registre aquí los valores químicos..."></textarea>
+              </div>
+            </div>
+          </div>
+          <button class="btn-download" onclick="emitirCertificado()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Emitir Certificado LVA 2024
+          </button>
+        </div>
+      </div>
+
+      <!-- EXAMEN -->
+      <div class="tab" id="tab-examen">
+        <div class="quiz-wrap">
+          <div class="quiz-card" id="quizCard"></div>
+        </div>
+      </div>
+
+      <!-- BIBLIOGRAFÍA -->
+      <div class="tab" id="tab-bibliografia">
+        <div class="bib-grid">
+          <div class="bib-card">
+            <div class="bib-head blue">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Acervo 2020-2024
+            </div>
+            <div class="bib-item blue"><div class="bib-title">Strasinger, S. K. (2021)</div><div class="bib-sub">Urinalysis and Body Fluids. 7th Ed.</div></div>
+            <div class="bib-item blue"><div class="bib-title">CENETEC México (2022)</div><div class="bib-sub">GPC: IVU Primer Nivel.</div></div>
+          </div>
+          <div class="bib-card">
+            <div class="bib-head gray">Tratados Clásicos</div>
+            <div class="bib-item gray"><div class="bib-title">Henry, J. B. (1991)</div><div class="bib-sub">Clinical Diagnosis. Saunders.</div></div>
+            <div class="bib-item gray"><div class="bib-title">Free, A. H. (1975)</div><div class="bib-sub">Urinalysis. CRC Press.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+
+    <footer>Uso Exclusivo Docencia — Lab. Virtual de Álvarez &copy; 2024</footer>
+  </main>
+</div>
+
+<!-- MODAL CERTIFICADO -->
+<div class="modal-overlay" id="modal" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-title">📋 Certificado LVA 2024 Generado</div>
+    <pre class="modal-pre" id="modalContent"></pre>
+    <button class="modal-close" onclick="closeModal()">Cerrar</button>
+  </div>
+</div>
+
+<script>
+  // ── NAVIGATION ──
+  const tabs = document.querySelectorAll('.tab');
+  const navLabels = { dashboard:'Dashboard', glosario:'Glosario LVA', reporte:'Generar Reporte', examen:'Examen Evaluativo', bibliografia:'Acervo Técnico' };
+
+  function showTab(id, btn) {
+    tabs.forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    document.getElementById('headerTitle').textContent = navLabels[id] || id;
+    if (id === 'examen') renderQuiz();
+  }
+
+  // Set today's date
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('rFecha').value = today;
+
+  // ── CERTIFICADO ──
+  function emitirCertificado() {
+    const p = document.getElementById('rPaciente').value || 'N/A';
+    const f = document.getElementById('rFecha').value;
+    const c = document.getElementById('rColor').value;
+    const a = document.getElementById('rAspecto').value;
+    const o = document.getElementById('rOlor').value;
+    const e = document.getElementById('rEspuma').value;
+    const q = document.getElementById('rQuimico').value || 'Sin observaciones registradas';
+
+    document.getElementById('modalContent').textContent =
+`CERTIFICADO DE RESULTADOS — LABORATORIO ÁLVAREZ
+══════════════════════════════════════════════════
+PACIENTE : ${p}
+FECHA    : ${f}
+
+EXAMEN FÍSICO (MACROSCÓPICO):
+  ▸ Color   : ${c}
+  ▸ Aspecto : ${a}
+  ▸ Olor    : ${o}
+  ▸ Espuma  : ${e}
+
+HALLAZGOS QUÍMICOS (VALIDACIÓN SSDC):
+  ${q}
+
+──────────────────────────────────────────────────
+Validado bajo norma NOM-007-SSA3-2011.
+Laboratorio Virtual Álvarez — SGC-LVA-2024`;
+
+    document.getElementById('modal').style.display = 'flex';
+  }
+
+  function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+  // ── QUIZ ──
+  const questions = [
+    { q: "¿Qué hallazgo físico se correlaciona directamente con la presencia de Bilirrubina (++)?", opts: [{ t:'Orina incolora con espuma persistente', c:false },{ t:'Orina color marrón con espuma amarilla', c:true },{ t:'Orina amarilla pálida con olor frutal', c:false }] },
+    { q: "Un niño de 5 años con aroma frutal y cetonas (+++) sugiere:", opts: [{ t:'Infección urinaria bacteriana', c:false },{ t:'Estado de ayuno prolongado o cetosis', c:true },{ t:'Hematuria glomerular post-estreptocócica', c:false }] },
+    { q: "En un paciente geriátrico con confusión mental y nitritos (+), la sospecha es:", opts: [{ t:'IVU Atípica (sin fiebre)', c:true },{ t:'Diabetes Mellitus Tipo 1', c:false },{ t:'Glomerulonefritis aguda', c:false }] },
+    { q: "¿Qué parámetro físico se asocia a una Proteinuria masiva (>300 mg/dL)?", opts: [{ t:'Color rojo brillante', c:false },{ t:'Espuma blanca persistente', c:true },{ t:'Olor amoniacal fuerte', c:false }] },
+    { q: "¿Cuál es el tiempo de lectura correcto para los LEUCOCITOS en Spinreact?", opts: [{ t:'30 segundos', c:false },{ t:'60 segundos', c:false },{ t:'120 segundos', c:true }] },
+    { q: "Una densidad urinaria de 1.035 se interpreta como:", opts: [{ t:'Orina muy diluida / Diabetes Insípida', c:false },{ t:'Orina muy concentrada / Deshidratación', c:true },{ t:'Rango de densidad normal', c:false }] }
+  ];
+
+  let step = 0, score = 0;
+
+  function renderQuiz() {
+    const card = document.getElementById('quizCard');
+    if (step >= questions.length) {
+      const pct = Math.round((score / questions.length) * 100);
+      const pass = score >= 4;
+      card.innerHTML = `
+        <div class="result-wrap">
+          <div class="result-icon ${pass ? 'pass' : 'fail'}">
+            ${pass
+              ? '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+              : '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'}
+          </div>
+          <div class="result-title">Resultados LVA</div>
+          <div class="result-sub">Evaluación académica bajo estándares 2024.</div>
+          <div class="score-box">
+            <div class="score-label">Puntaje Certificado</div>
+            <div class="score-num">${pct}%</div>
+            <div class="score-detail">${score} de ${questions.length} aciertos registrados</div>
+          </div>
+          <button class="btn-retry" onclick="step=0;score=0;renderQuiz()">Reiniciar Evaluación Diagnóstica</button>
+        </div>`;
+      return;
+    }
+    const q = questions[step];
+    const pct = Math.round((step / questions.length) * 100);
+    card.innerHTML = `
+      <div class="quiz-meta">
+        <span class="quiz-cert">Certificación LVA-2024</span>
+        <span class="quiz-count">Pregunta ${step + 1} de ${questions.length}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((o, i) => `
+          <button class="quiz-opt" onclick="answer(${o.c})">
+            <span class="quiz-num">${i + 1}</span>
+            ${o.t}
+          </button>`).join('')}
+      </div>`;
+  }
+
+  function answer(correct) {
+    if (correct) score++;
+    step++;
+    renderQuiz();
+  }
+
+  // Init quiz on load
+  renderQuiz();
+</script>
+</body>
+</html>
